@@ -5,6 +5,7 @@ loop=1;
 %%Variable and Object set up
 
 % Create the face detector object.
+
 faceDetector = vision.CascadeObjectDetector;
 
 % Create the point tracker object.
