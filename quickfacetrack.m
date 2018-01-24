@@ -1,7 +1,7 @@
 close all; clear vars; clc
 
 
-v = VideoWriter('newfile2.avi');
+%v = VideoWriter('newfile2.avi');
 [FileName, PathName] = uigetfile();
 
 % Read the file         
@@ -25,15 +25,15 @@ faceDetector = vision.CascadeObjectDetector('MinSize', [vidHeight/2 vidWidth/2])
 forehead=zeros(numFrames,3);
 frame=1;
 dropped=0;
-open(v)
+%open(v)
 while hasFrame(mov)
     video = readFrame(mov);
-    bbox = faceDetector(video);
+    bbox = faceDetector(rgb2gray(video));
     if ~isempty(bbox())
 %     IFaces = insertObjectAnnotation(video, 'rectangle', bbox, 'Face');   
 %     figure(1), imshow(IFaces), title('Detected faces');
     cropFrame = imcrop(video,bbox(1,:));
-    writeVideo(v,cropFrame)
+    %%writeVideo(v,cropFrame)
     xvalue=(0.5*bbox(1,3));
     yvalue=0.25*bbox(1,4);
     forehead(frame,1)=cropFrame(xvalue, yvalue, 1); 
@@ -44,7 +44,7 @@ while hasFrame(mov)
     end
     frame=frame+1;
 end
-close(v)
+%close(v)
 foreheadnew = forehead(any(forehead,2),:);
 figure(1)
 subplot(3,1,1);plot(foreheadnew(:,1));
@@ -77,3 +77,44 @@ xlabel('Frequency, Hz')
 mean1=mean(foreheadnew);
 mean1=mean1/256;
 hsv = rgb2hsv(mean1);
+
+%% Filter raw signals
+fc_lp = 4.0; % high cut-off
+fc_hp = 0.7; % low cut-off
+fs = frame_rate;
+
+Wn = [fc_hp/(fs/2) fc_lp/(fs/2)]; % normalise with respect to Nyquist frequency
+
+[b,a] = fir1(255, Wn, 'bandpass'); 
+
+iPPG_filtR = filter(b,a,foreheadnew(:,1));
+iPPG_filtG = filter(b,a,foreheadnew(:,2));
+iPPG_filtB = filter(b,a,foreheadnew(:,3));
+figure(3);
+subplot (3,1,1);
+plot(iPPG_filtR);
+subplot (3,1,2);
+plot(iPPG_filtG);
+subplot (3,1,3);
+plot(iPPG_filtB);
+
+yR=fft(iPPG_filtR);
+yG=fft(iPPG_filtG);
+yB=fft(iPPG_filtB);
+f=(0:length(yR)-1)*fs/length(yR);
+figure(4);
+subplot (3,1,1);
+plot(f,abs(yR));
+subplot (3,1,2);
+plot(f,abs(yG));
+subplot (3,1,3);
+plot(f,abs(yB));
+[~,position]=max(abs(yR));
+peak_f=f(position);
+HR_R=round(peak_f*60)
+[~,position]=max(abs(yG));
+peak_f=f(position);
+HR_G=round(peak_f*60)
+[~,position]=max(abs(yB));
+peak_f=f(position);
+HR_B=round(peak_f*60)
