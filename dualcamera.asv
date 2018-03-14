@@ -1,0 +1,51 @@
+close all; clear all; clc;
+
+%Dual camera test
+
+cam1= webcam(1);
+cam2= webcam(2);
+% cam1.AvailableResolutions
+% cam2.AvailableResolutions
+cam1.Resolution = '640x480';
+cam2.Resolution = '640x480';
+
+
+
+% preview(cam1);
+% preview(cam2);
+
+%frameCount = 1;
+frameMax = 2*30;
+video1=uint8(zeros(frameMax,480,640,3));
+%Video1=gpuArray(video1);
+video2=uit8(zeros(frameMax,480,640,3));
+%Video2=gpuArray(video2);
+
+test=snapshot(cam1);
+for frameCount = 1 : frameMax
+    tic
+    video1(frameCount,:,:,:) = snapshot(cam1);
+    %imshow(squeeze(video1(frameCount,:,:,:)));
+    video2(frameCount,:,:,:) = snapshot(cam2);
+    t(frameCount)=toc;
+end
+
+% video1=gather(Video1);
+% video2=gather(Video2);
+plot(t);
+mean(t)
+1/mean(t)
+std(t)
+
+for frame = 1:frameMax
+  figure(1);
+%   a=reshape(video1(frame,:,:,:),480,640,3);
+a=squeeze(video1(frame,:,:,:));
+  subplot(1,2,1);
+  imshow(a);
+  b=reshape(video2(frame,:,:,:), [480,640,3]);
+  subplot(1,2,2);
+  imshow(b);
+  %mov(frame)=im2frame(a);
+end
+

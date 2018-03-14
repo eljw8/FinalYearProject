@@ -61,9 +61,9 @@ while hasFrame(v)
     else
        dropped=dropped+1; 
     end
-%     figure(1);
-%     imshow(IFaces);
-%     title('detect');
+    figure(1);
+    imshow(IFaces);
+    title('detect');
     
 %     MASK=(YCBCR(:,:,2)>=77 & YCBCR(:,:,2)<=127 & YCBCR(:,:,3)>=133 & YCBCR(:,:,3)<=173);
 %     subplot(2,4,5);
