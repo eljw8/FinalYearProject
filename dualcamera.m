@@ -1,4 +1,5 @@
-close all; clear all; clc;
+close all; clc;
+%clear all;
 
 %Dual camera test
 
@@ -18,7 +19,7 @@ frameMax = 8*15;
 % [Left,Right,M,t]=record(frameMax,Resolution);
 % 
 % plot(t);
-
+% 
 % mkdir('Video');
 % num=3;
 % L=sprintf('Video\\Left%d.avi',num);
@@ -28,9 +29,10 @@ frameMax = 8*15;
 % 
 % Save(Left,Right,M,vL,vR)
 
-vL = VideoReader('Video\Left3.avi');
-vR = VideoReader('Video\Right3.avi');
-[Left,Right] = videoImport(vL,vR);
+% vL = VideoReader('Video\Left3.avi');
+% vR = VideoReader('Video\Right3.avi');
+% [Left,Right] = videoImport(vL,vR);
+
 
 fprintf('Detecting Face\n');
 for frame = 1:frameMax
@@ -39,19 +41,28 @@ for frame = 1:frameMax
   a=squeeze(Left(frame,:,:,:));
   grayVideo1=rgb2gray(a);
   bbox1 = faceDetector.step(grayVideo1);
+  if ~isempty(bbox1)
   bboxPoints1 = bbox2points(bbox1(1, :));
+  % Detect feature points in the face region.
+  points1 = detectMinEigenFeatures(grayVideo1, 'ROI', bbox1);
   bboxPolygon1 = reshape(bboxPoints1', 1, []);
+%   cropLeft(frame,:,:,:)=imcrop(a,bbox1(1, :));
   a = insertShape(a, 'Polygon', bboxPolygon1, 'LineWidth', 3);
   subplot(1,2,1);
   imshow(a);
+  hold on
+  plot(points1.selectStrongest(10));
+  end
   b=squeeze(Right(frame,:,:,:));
   grayVideo2=rgb2gray(b);
   bbox2 = faceDetector.step(grayVideo2);
+  if ~isempty(bbox2)
   bboxPoints2 = bbox2points(bbox2(1, :));
   bboxPolygon2 = reshape(bboxPoints2', 1, []);
   b = insertShape(b, 'Polygon', bboxPolygon2, 'LineWidth', 3);
   subplot(1,2,2);
   imshow(b);
+  end
   %mov(frame)=im2frame(a);
 end
 fprintf('Detection complete\n')
