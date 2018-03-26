@@ -1,4 +1,4 @@
-%taking photos
+%taking photos, to use for syncing function
 
 close all; clear all; clc;
 
