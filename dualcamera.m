@@ -56,85 +56,85 @@ for frame = 1:frameMax
 end
 fprintf('Detection complete\n')
 
-function [Left,Right,M,t] = record(frameMax,resolution)
-%%record dual camera footage using webcams
-%frameMax = total number of frames to be recorded
-%resolution = [height,width] array of resolution that is being recorded
+% function [Left,Right,M,t] = record(frameMax,resolution)
+% %%record dual camera footage using webcams
+% %frameMax = total number of frames to be recorded
+% %resolution = [height,width] array of resolution that is being recorded
+% 
+%     cam1= webcam(1);  %% right as user sees, left as camera sees
+%     cam2= webcam(2);  %% left as user sees, right as camera sees
+%     txt=sprintf('%dx%d',resolution(2),resolution(1));
+%     cam1.Resolution = txt;
+%     cam2.Resolution = txt;
+%     video1=uint8(zeros(frameMax,resolution(1),resolution(2),3));
+%     video2=uint8(zeros(frameMax,resolution(1),resolution(2),3));
+%     fprintf('filming\n');
+%         for frameCount = 1 : frameMax
+%             tic
+%             video1(frameCount,:,:,:) = snapshot(cam1);
+%             %imshow(squeeze(video1(frameCount,:,:,:)));
+%             video2(frameCount,:,:,:) = snapshot(cam2);
+%             t(frameCount)=toc;
+%         end
+%     clear cam1;
+%     clear cam2;
+%     fprintf('Filming stopped\n');
+%     t(1)=[];
+%     Mean=mean(t);
+%     M=1/Mean;
+%     Left=video1;
+%     Right=video2;
+% 
+% end
 
-    cam1= webcam(1);  %% right as user sees, left as camera sees
-    cam2= webcam(2);  %% left as user sees, right as camera sees
-    txt=sprintf('%dx%d',resolution(2),resolution(1));
-    cam1.Resolution = txt;
-    cam2.Resolution = txt;
-    video1=uint8(zeros(frameMax,resolution(1),resolution(2),3));
-    video2=uint8(zeros(frameMax,resolution(1),resolution(2),3));
-    fprintf('filming\n');
-        for frameCount = 1 : frameMax
-            tic
-            video1(frameCount,:,:,:) = snapshot(cam1);
-            %imshow(squeeze(video1(frameCount,:,:,:)));
-            video2(frameCount,:,:,:) = snapshot(cam2);
-            t(frameCount)=toc;
-        end
-    clear cam1;
-    clear cam2;
-    fprintf('Filming stopped\n');
-    t(1)=[];
-    Mean=mean(t);
-    M=1/Mean;
-    Left=video1;
-    Right=video2;
+% function []=Save(Left,Right,frameRate,vL,vR)
+% %%function to save two camera streams Left and Right
+% %Left and Right must be 4d arrays, (frame number, height, width, 3(colour))
+% %frameRate= frame rate of video to be written
+% %num = suffix of file names being saved
+% %vL,vR =VideoWriter objects
+% 
+% 
+% vL.FrameRate=frameRate;
+% 
+% vR.FrameRate=frameRate;
+% open(vL);
+% open(vR);
+% [a,~,~,~] = size(Left);
+% fprintf('Saving\n');
+% for frame = 1:a
+%     aL=squeeze(Left(frame,:,:,:));
+%     aR=squeeze(Right(frame,:,:,:));
+%     writeVideo(vL,aL);
+%     writeVideo(vR,aR);
+% end
+% close(vL);
+% close(vR);
+% 
+% fprintf('Saving complete\n');
+% end
 
-end
-
-function []=Save(Left,Right,frameRate,vL,vR)
-%%function to save two camera streams Left and Right
-%Left and Right must be 4d arrays, (frame number, height, width, 3(colour))
-%frameRate= frame rate of video to be written
-%num = suffix of file names being saved
-%vL,vR =VideoWriter objects
-
-
-vL.FrameRate=frameRate;
-
-vR.FrameRate=frameRate;
-open(vL);
-open(vR);
-[a,~,~,~] = size(Left);
-fprintf('Saving\n');
-for frame = 1:a
-    aL=squeeze(Left(frame,:,:,:));
-    aR=squeeze(Right(frame,:,:,:));
-    writeVideo(vL,aL);
-    writeVideo(vR,aR);
-end
-close(vL);
-close(vR);
-
-fprintf('Saving complete\n');
-end
-
-function[Left, Right] = videoImport(vL,vR)
-%%imports two videos, one as left one as right
-%vL = video object cameras left
-%vR = video object cameras Right
-fprintf('Importing\n');
-    totalFrameL=vL.NumberOfFrames;
-    totalFrameR=vR.NumberOfFrames;
-    heightL=vL.Height;
-    heightR=vR.Height;
-    widthL=vL.Width;
-    widthR=vR.Width;
-    
-    Left=uint8(zeros(totalFrameL,heightL,widthL,3));
-    Right=uint8(zeros(totalFrameR,heightR,widthR,3));
-
-    
-    for frameNum = 1:totalFrameL
-        Left(frameNum,:,:,:)=read(vL,frameNum);
-    end
-    for frameNum = 1:totalFrameR
-        Right(frameNum,:,:,:)=read(vR,frameNum);
-    end
-fprintf('Importing complete\n');
-end
+% function[Left, Right] = videoImport(vL,vR)
+% %%imports two videos, one as left one as right
+% %vL = video object cameras left
+% %vR = video object cameras Right
+% fprintf('Importing\n');
+%     totalFrameL=vL.NumberOfFrames;
+%     totalFrameR=vR.NumberOfFrames;
+%     heightL=vL.Height;
+%     heightR=vR.Height;
+%     widthL=vL.Width;
+%     widthR=vR.Width;
+%     
+%     Left=uint8(zeros(totalFrameL,heightL,widthL,3));
+%     Right=uint8(zeros(totalFrameR,heightR,widthR,3));
+% 
+%     
+%     for frameNum = 1:totalFrameL
+%         Left(frameNum,:,:,:)=read(vL,frameNum);
+%     end
+%     for frameNum = 1:totalFrameR
+%         Right(frameNum,:,:,:)=read(vR,frameNum);
+%     end
+% fprintf('Importing complete\n');
+% end
