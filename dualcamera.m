@@ -2,15 +2,18 @@ close all; clear all; clc;
 
 %Dual camera test
 
+Height=720;
+Width=960;
 % Create the face detector object.
-faceDetector = vision.CascadeObjectDetector('MinSize', [960/4 720/4]);
+faceDetector = vision.CascadeObjectDetector('MinSize', [Width/4 Height/4]);
 
-cam1= webcam(1);
-cam2= webcam(2);
+cam1= webcam(1);  %% right as user sees, left as camera sees
+cam2= webcam(2);  %% left as user sees, right as camera sees
 % cam1.AvailableResolutions
 % cam2.AvailableResolutions
-cam1.Resolution = '960x720';
-cam2.Resolution = '960x720';
+txt=sprintf('%dx%d',Width,Height);
+cam1.Resolution = txt;
+cam2.Resolution = txt;
 
 
 
@@ -19,13 +22,13 @@ cam2.Resolution = '960x720';
 
 %frameCount = 1;
 frameMax = 8*15;
-video1=uint8(zeros(frameMax,720,960,3));
+video1=uint8(zeros(frameMax,Height,Width,3));
 %Video1=gpuArray(video1);
-video2=uint8(zeros(frameMax,720,960,3));
+video2=uint8(zeros(frameMax,Height,Width,3));
 %Video2=gpuArray(video2);
 
-test=snapshot(cam1);
-'filming'
+%test=snapshot(cam1);
+fprintf('filming\n');
 for frameCount = 1 : frameMax
     tic
     video1(frameCount,:,:,:) = snapshot(cam1);
@@ -33,14 +36,39 @@ for frameCount = 1 : frameMax
     video2(frameCount,:,:,:) = snapshot(cam2);
     t(frameCount)=toc;
 end
-'done'
+clear cam1;
+clear cam2;
+fprintf('Filming stopped\n');
+
+
+
 % video1=gather(Video1);
 % video2=gather(Video2);
 plot(t);
-mean(t)
-1/mean(t)
-std(t)
+M=mean(t);
+frameRate=1/M;
+sd=std(t);
 
+
+vL = VideoWriter('Video\Left.avi','Motion JPEG AVI');
+vR = VideoWriter('Video\Right.avi','Motion JPEG AVI');
+vL.FrameRate=frameRate;
+vR.FrameRate=frameRate;
+open(vL);
+open(vR);
+fprintf('Saving\n');
+for frame = 1:frameMax
+    aL=squeeze(video1(frame,:,:,:));
+    aR=squeeze(video2(frame,:,:,:));
+    writeVideo(vL,aL);
+    writeVideo(vR,aR);
+end
+close(vL);
+close(vR);
+
+fprintf('Saving complete\n');
+
+fprintf('Detecting Face\n');
 for frame = 1:frameMax
   figure(2);
 %   a=reshape(video1(frame,:,:,:),480,640,3);
