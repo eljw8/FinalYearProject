@@ -21,7 +21,7 @@ frameMax = 8*15;
 % plot(t);
 % 
 % mkdir('Video');
-% num=3;
+% num=4;
 % L=sprintf('Video\\Left%d.avi',num);
 % R=sprintf('Video\\Right%d.avi',num);
 % vL = VideoWriter(L,'Motion JPEG AVI');
@@ -33,39 +33,109 @@ frameMax = 8*15;
 % vR = VideoReader('Video\Right3.avi');
 % [Left,Right] = videoImport(vL,vR);
 
+% Detect feature points
+imagePoints1 = detectMinEigenFeatures(rgb2gray(squeeze(Left(1,:,:,:))), 'MinQuality', 0.0001);
 
-fprintf('Detecting Face\n');
-for frame = 1:frameMax
-  figure(2);
-%   a=reshape(video1(frame,:,:,:),480,640,3);
-  a=squeeze(Left(frame,:,:,:));
-  grayVideo1=rgb2gray(a);
-  bbox1 = faceDetector.step(grayVideo1);
-  if ~isempty(bbox1)
-  bboxPoints1 = bbox2points(bbox1(1, :));
-  % Detect feature points in the face region.
-  points1 = detectMinEigenFeatures(grayVideo1, 'ROI', bbox1);
-  bboxPolygon1 = reshape(bboxPoints1', 1, []);
-%   cropLeft(frame,:,:,:)=imcrop(a,bbox1(1, :));
-  a = insertShape(a, 'Polygon', bboxPolygon1, 'LineWidth', 3);
-  subplot(1,2,1);
-  imshow(a);
-  hold on
-  plot(points1.selectStrongest(10));
-  end
-  b=squeeze(Right(frame,:,:,:));
-  grayVideo2=rgb2gray(b);
-  bbox2 = faceDetector.step(grayVideo2);
-  if ~isempty(bbox2)
-  bboxPoints2 = bbox2points(bbox2(1, :));
-  bboxPolygon2 = reshape(bboxPoints2', 1, []);
-  b = insertShape(b, 'Polygon', bboxPolygon2, 'LineWidth', 3);
-  subplot(1,2,2);
-  imshow(b);
-  end
-  %mov(frame)=im2frame(a);
+% Visualize detected points
+figure
+imshow(squeeze(Left(1,:,:,:)), 'InitialMagnification', 50);
+title('150 Strongest Corners from the First Image');
+hold on
+plot(selectStrongest(imagePoints1, 150));
+
+% Create the point tracker
+tracker = vision.PointTracker('MaxBidirectionalError', 1, 'NumPyramidLevels', 5);
+
+% Initialize the point tracker
+imagePoints1 = imagePoints1.Location;
+initialize(tracker, imagePoints1, squeeze(Left(1,:,:,:)));
+
+% % Track the points
+% [imagePoints2, validIdx] = step(tracker, squeeze(Right(1,:,:,:)));
+% matchedPoints1 = imagePoints1(validIdx, :);
+% matchedPoints2 = imagePoints2(validIdx, :);
+
+% % Visualize correspondences
+% figure
+% showMatchedFeatures(squeeze(Left(1,:,:,:)), squeeze(Right(1,:,:,:)), matchedPoints1, matchedPoints2);
+% title('Tracked Features');
+frame=1;
+    I1 = undistortImage(squeeze(Left(frame,:,:,:)), stereoParams.CameraParameters1);
+    I2 = undistortImage(squeeze(Right(frame,:,:,:)), stereoParams.CameraParameters2);
+    
+    grayI1=rgb2gray(I1);
+    grayI2=rgb2gray(I2);
+    bbox1=faceDetector(grayI1);
+    bbox2=faceDetector(grayI2);
+    points1=detectMinEigenFeatures(grayI1,'ROI',bbox1);
+    points2=detectMinEigenFeatures(grayI2,'ROI',bbox2);
+    
+    pointImage1 = insertMarker(I1,points1.Location,'+','Color','white');
+    pointImage2 = insertMarker(I2,points2.Location,'+','Color','white');
+    figure(1);
+    imshowpair(I1, I2, 'montage')
+    title('Detected interest points');
+    
+    tracker = vision.PointTracker('MaxBidirectionalError',1);
+    initialize(tracker,points1.Location,objectFrame);
+    
+for frame = 2:frameMax
+    
+    I1 = undistortImage(squeeze(Left(frame,:,:,:)), stereoParams.CameraParameters1);
+    I2 = undistortImage(squeeze(Right(frame,:,:,:)), stereoParams.CameraParameters2);
+    
+    grayI1=rgb2gray(I1);
+    grayI2=rgb2gray(I2);
+    bbox1=faceDetector(grayI1);
+    bbox2=faceDetector(grayI2);
+    if ~isempty(bbox1) && ~isempty(bbox2)
+        cropI1=imcrop(I1,bbox1);
+        cropI2=imcrop(I2,bbox2);
+        [imagePoints1, validIdx] = tracker(I1);
+        points1 = detectMinEigenFeatures(grayI1, 'ROI', bbox1,'MinQuality', 0.001);
+        points2 = detectMinEigenFeatures(grayI2, 'ROI', bbox2,'MinQuality', 0.001);
+        I1=insertMarker(I1,selectStrongest(points1,50), 'color', 'red');
+        I1=insertMarker(I1,imagePoints1, 'color', 'white');
+        I2=insertMarker(I2,selectStrongest(points2,50));
+        figure (2);
+        imshowpair(I1, I2, 'montage');
+        hold on;
+    end
 end
-fprintf('Detection complete\n')
+
+
+% fprintf('Detecting Face\n');
+% for frame = 1:frameMax
+%   figure(2);
+% %   a=reshape(video1(frame,:,:,:),480,640,3);
+%   a=squeeze(Left(frame,:,:,:));
+%   grayVideo1=rgb2gray(a);
+%   bbox1 = faceDetector.step(grayVideo1);
+%   if ~isempty(bbox1)
+%   bboxPoints1 = bbox2points(bbox1(1, :));
+%   % Detect feature points in the face region.
+%   points1 = detectMinEigenFeatures(grayVideo1, 'ROI', bbox1);
+%   bboxPolygon1 = reshape(bboxPoints1', 1, []);
+% %   cropLeft(frame,:,:,:)=imcrop(a,bbox1(1, :));
+%   a = insertShape(a, 'Polygon', bboxPolygon1, 'LineWidth', 3);
+%   subplot(1,2,1);
+%   imshow(a);
+%   hold on
+%   plot(points1.selectStrongest(10));
+%   end
+%   b=squeeze(Right(frame,:,:,:));
+%   grayVideo2=rgb2gray(b);
+%   bbox2 = faceDetector.step(grayVideo2);
+%   if ~isempty(bbox2)
+%   bboxPoints2 = bbox2points(bbox2(1, :));
+%   bboxPolygon2 = reshape(bboxPoints2', 1, []);
+%   b = insertShape(b, 'Polygon', bboxPolygon2, 'LineWidth', 3);
+%   subplot(1,2,2);
+%   imshow(b);
+%   end
+%   %mov(frame)=im2frame(a);
+% end
+% fprintf('Detection complete\n')
 
 % function [Left,Right,M,t] = record(frameMax,resolution)
 % %%record dual camera footage using webcams
